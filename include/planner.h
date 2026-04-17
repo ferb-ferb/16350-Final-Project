@@ -94,6 +94,9 @@ private:
   void createConstraintsFromConflict(const Conflict &conflict, Constraint &c1,
                                      Constraint &c2);
 
+  /* Calculates the cost of the current node's path */
+  int calculateCost(const std::unordered_map<int, Path> &paths);
+  /* ********************************************************************** */
   /* ************************** LOW LEVEL FUNCTIONS *********************** */
 
   /* Whatever low level planner we choose to use. probably space time A* */
@@ -106,8 +109,6 @@ private:
   std::vector<Constraint>
   getConstraintsForAgent(int agent_id,
                          const std::vector<Constraint> &all_constraints);
-
-  /* Calculates the cost of the current node's path */
-  int calculateCost(const std::unordered_map<int, Path> &paths);
+  /* ********************************************************************** */
 };
 #endif

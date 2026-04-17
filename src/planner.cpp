@@ -1,3 +1,9 @@
 #include "planner.h"
-#include <stdio.h>
-int main() { return 0; }
+#include <algorithm>
+#include <cmath>
+#include <unordered_map>
+
+std::unordered_map<int, Path> CBSPlanner::plan() {
+  std::unordered_map<int, Path> plans;
+  return plans;
+}
