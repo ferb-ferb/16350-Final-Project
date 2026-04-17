@@ -2,6 +2,7 @@
 #define ASTAR_UTILS_H
 
 #include "planner.h"
+#include <cmath>
 
 struct AStarNode {
   Location loc;
@@ -37,7 +38,16 @@ bool findPath(int agent_id, const Location &start, const Location &goal,
               const std::vector<std::vector<int>> &grid,
               const std::vector<Constraint> &agent_constraints, Path &out_path);
 
-int manhattan(const Location &a, const Location &b);
+inline int manhattan(const Location &a, const Location &b) {
+  return std::abs(a.x - b.x) + std::abs(a.y - b.y);
+}
+
+struct CompareNode {
+  bool operator()(const std::shared_ptr<AStarNode> a,
+                  const std::shared_ptr<AStarNode> b) {
+    return *a > *b;
+  }
+};
 } // namespace AStar
 
 #endif
