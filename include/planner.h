@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-/* ****************** Basic ***************** */
+/* ****************************** Basic ****************************** */
 /* A 2d coordinate */
 struct Location {
   int x;
@@ -27,6 +27,9 @@ struct Agent {
 
 /* Paths are a vector of locations, index inherently represents time */
 using Path = std::vector<Location>;
+
+/* ****************************************************************** */
+/* *********************** Conflict Tree Stuff ************************* */
 
 /* Constraint struct defines a rule that robot id cannot occupy a location
  * (vertex constr.) OR traverse an edge at a given time (edge constr.)
@@ -59,13 +62,13 @@ struct Conflict {
  */
 struct CTNode {
   std::vector<Constraint> constraints; // Accumulated set of constraints
-  std::unordered_map<int, Path>
-      paths; // plans mapped to agents... need a hashing function
-  int cost;  // Cost
+  std::unordered_map<int, Path> paths; // plans mapped to agents
+  int cost;                            // Cost
 
   /* Overloaded comparator for min heap sorting of conflict tree */
   bool operator>(const CTNode &other) const { return cost > other.cost; }
 };
+/* ****************************************************************** */
 /* **************************** CBS Planner Class ************************ */
 
 class CBSPlanner {
@@ -80,8 +83,7 @@ public:
 private:
   const std::vector<std::vector<int>> &grid_map;
   const std::vector<Agent> &agents;
-  /* ************************** HIGH LEVEL FUNCTIONS
-   * **************************** */
+  /* ************************** HIGH LEVEL FUNCTIONS* ********************* */
   /* Scans a CBS Node for a conflict and returns true on first conflict found
    * Returns false if this is a valid node
    */
@@ -92,8 +94,7 @@ private:
   void createConstraintsFromConflict(const Conflict &conflict, Constraint &c1,
                                      Constraint &c2);
 
-  /* ************************** LOW LEVEL FUNCTIONS ****************************
-   */
+  /* ************************** LOW LEVEL FUNCTIONS *********************** */
 
   /* Whatever low level planner we choose to use. probably space time A* */
   /* Finds optimal path for one agent given constraints */
