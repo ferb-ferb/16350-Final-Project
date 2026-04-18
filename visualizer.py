@@ -28,7 +28,7 @@ def parse_mapfile(filename):
 
         costmap_ = np.asarray(costmap_).T
 
-    return x_size, y_size, collision_thresh, num_robots, costmap_
+    return x_size_, y_size_, collision_thresh, num_robots, costmap_
 
 
 def parse_robot_trajectory_file(filename):
@@ -73,7 +73,6 @@ if __name__ == "__main__":
         # This uses the index 'i' to cycle through colors or set specific ones
         line, = ax.plot([], [], lw=2, marker='o', label=f'Robot {i}')
         lines.append(line)
-
     def init():
         for line in lines:
             line.set_data([], [])
@@ -90,13 +89,44 @@ if __name__ == "__main__":
             
             lines[i].set_data(x_vals, y_vals)
             
+        # CRITICAL: You must return the updated lines!
         return lines
 
-    # Determine total frames based on the longest trajectory
-    max_time = max(p['t'] for p in robot_trajectory)
-    ani = FuncAnimation(fig, update, frames=max_time // SPEEDUP, 
-                        init_func=init, blit=True, interval=50)
+    # 1. Automatically calculate the total frames needed based on your highest time step
+    max_time = max([p['t'] for p in robot_trajectory])
+    total_frames = int(max_time / SPEEDUP) + 1
 
-    plt.legend()
-    plt.show()
-    ani.save("myGIF.gif")
+    # 2. Assign to 'ani' so it doesn't get garbage collected. 
+    # Set blit=False to ensure it renders flawlessly over a costmap.
+    ani = FuncAnimation(fig, update, frames=total_frames, init_func=init, blit=False, interval=200)
+
+    # 3. Explicitly save the output as a real GIF file
+    print("Baking animation into robot_path.gif... this might take a few seconds.")
+    ani.save('robot_path.gif', writer='pillow')
+    print("Done! Open 'robot_path.gif' to see your robots move.")
+    # def init():
+    #     for line in lines:
+    #         line.set_data([], [])
+    #     return lines
+    #
+    # def update(frame):
+    #     current_time = frame * SPEEDUP
+    #
+    #     for i, robot_id in enumerate(robot_ids):
+    #         # Filter trajectory points that have occurred up to 'current_time'
+    #         traj = robots[robot_id]
+    #         x_vals = [p['x'] for p in traj if p['t'] <= current_time]
+    #         y_vals = [p['y'] for p in traj if p['t'] <= current_time]
+    #
+    #         lines[i].set_data(x_vals, y_vals)
+    #
+    #     return lines
+    #
+    # # Determine total frames based on the longest trajectory
+    # max_time = max(p['t'] for p in robot_trajectory)
+    # ani = FuncAnimation(fig, update, frames=max_time // SPEEDUP, 
+    #                     init_func=init, blit=True, interval=50)
+    #
+    # plt.legend()
+    # plt.show()
+    # ani.save("myGIF.gif")

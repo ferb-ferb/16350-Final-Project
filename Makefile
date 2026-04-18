@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -Iinclude 
-TARGET = main
+TARGET = runtest
 
 SRC_d = src
 BUILD_d = build
@@ -18,4 +18,4 @@ $(BUILD_d)/%.o: $(SRC_d)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OBJ_DIR) $(TARGET)
+	rm -rf $(BUILD_d) $(TARGET)
