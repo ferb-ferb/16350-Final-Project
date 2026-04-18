@@ -7,7 +7,7 @@
 struct AStarNode {
   Location loc;
   int time;
-  int f, g, h;
+  int h, g, f;
   std::shared_ptr<AStarNode> parent;
 
   AStarNode(Location l, int t, int g_val, int h_val,
@@ -34,8 +34,7 @@ template <> struct hash<AStarNode> {
 
 namespace AStar {
 
-bool findPath(int agent_id, const Location &start, const Location &goal,
-              const std::vector<std::vector<int>> &grid,
+bool findPath(Agent curr_agent, const std::vector<std::vector<int>> &grid,
               const std::vector<Constraint> &agent_constraints, Path &out_path);
 
 inline int manhattan(const Location &a, const Location &b) {

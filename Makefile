@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -Wall -Iinclude 
-TARGET = planner
+TARGET = main
 
 SRC_d = src
 BUILD_d = build
