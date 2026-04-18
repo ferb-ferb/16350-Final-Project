@@ -7,7 +7,7 @@
 struct AStarNode {
   Location loc;
   int time;
-  int h, g, f;
+  int g, h, f;
   std::shared_ptr<AStarNode> parent;
 
   AStarNode(Location l, int t, int g_val, int h_val,

@@ -4,10 +4,174 @@
 #include <cmath>
 #include <unordered_map>
 
-std::unordered_map<int, Path> CBSPlanner::plan() {
-  std::unordered_map<int, Path> plans;
+void CBSPlanner::createConstraintsFromConflict(const Conflict &conflict,
+                                               Constraint &c1, Constraint &c2) {
+  // Both constraints share the same time
+  c1.time = conflict.time;
+  c2.time = conflict.time;
 
-  return plans;
+  c1.agent_id = conflict.agent1;
+  c2.agent_id = conflict.agent2;
+
+  /* Vertex Cosntrain Handling */
+  if (!conflict.loc2.has_value()) {
+    c1.loc1 = conflict.loc1;
+    c1.loc2 = std::nullopt;
+
+    c2.loc1 = conflict.loc1;
+    c2.loc2 = std::nullopt;
+  } else {
+    /* Edge Conflict handing: agent 1 constraint */
+    c1.loc1 = conflict.loc1;
+    c1.loc2 = conflict.loc2.value();
+
+    /* Agent 2 constraint */
+    c2.loc1 = conflict.loc2.value();
+    c2.loc2 = conflict.loc1;
+  }
+}
+
+bool CBSPlanner::getFirstConflict(const std::unordered_map<int, Path> &paths,
+                                  Conflict &out_conflict) {
+  // Extract just the agent IDs to make pairing them up easier
+  std::vector<int> agent_ids;
+  for (const auto &pair : paths) {
+    agent_ids.push_back(pair.first);
+  }
+
+  // Compare every agent against every other agent O(N^2)
+  for (size_t i = 0; i < agent_ids.size(); ++i) {
+    for (size_t j = i + 1; j < agent_ids.size(); ++j) {
+      int a1 = agent_ids[i];
+      int a2 = agent_ids[j];
+      const Path &p1 = paths.at(a1);
+      const Path &p2 = paths.at(a2);
+
+      // We must check up to the end of the longest path
+      int max_time = std::max(p1.size(), p2.size());
+
+      for (int t = 0; t < max_time; ++t) {
+        /* IMPORTANT: Goal Persistence
+         *  agents rest at their goal point when complete
+         */
+        Location loc1 = (t < static_cast<int>(p1.size())) ? p1[t] : p1.back();
+        Location loc2 = (t < static_cast<int>(p2.size())) ? p2[t] : p2.back();
+
+        /* Vertex Conflict */
+        if (loc1 == loc2) {
+          out_conflict.agent1 = a1;
+          out_conflict.agent2 = a2;
+          out_conflict.time = t;
+          out_conflict.loc1 = loc1;
+          out_conflict.loc2 = std::nullopt;
+          return true;
+        }
+
+        /* Edge Conflict */
+        if (t > 0) { // Edges only exist for t > 0
+          Location prev1 =
+              (t - 1 < static_cast<int>(p1.size())) ? p1[t - 1] : p1.back();
+          Location prev2 =
+              (t - 1 < static_cast<int>(p2.size())) ? p2[t - 1] : p2.back();
+
+          if (prev1 == loc2 && loc1 == prev2) {
+            out_conflict.agent1 = a1;
+            out_conflict.agent2 = a2;
+            out_conflict.time = t;
+            // For edge conflicts, we record the direction Agent 1 was moving
+            out_conflict.loc1 = prev1;
+            out_conflict.loc2 = loc1;
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  /* Safe */
+  return false;
+}
+
+int CBSPlanner::calculateCost(const std::unordered_map<int, Path> &paths) {
+  int total_cost = 0;
+  for (const auto &[agent_id, path] : paths) {
+    if (!path.empty()) {
+      // Cost is the number of transitions (length - 1)
+      total_cost += (path.size() - 1);
+    }
+  }
+  return total_cost;
+}
+
+std::unordered_map<int, Path> CBSPlanner::plan() {
+  /* Initialize CT */
+  std::priority_queue<CTNode, std::vector<CTNode>, std::greater<CTNode>>
+      open_list;
+
+  CTNode root;
+
+  /* Find initail uncoordinated paths */
+  for (const auto &agent : agents) {
+    Path initial_path;
+    bool success = runSpaceTimeAStar(agent.id, root.constraints, initial_path);
+    if (!success) {
+      /* unsolvable */
+      return {};
+    }
+    root.paths[agent.id] = initial_path;
+  }
+
+  root.cost = calculateCost(root.paths);
+  open_list.push(root);
+
+  /* main loop */
+  while (!open_list.empty()) {
+    // Pop the cheapest node
+    CTNode current = open_list.top();
+    open_list.pop();
+
+    // Check for collisions
+    Conflict conflict;
+    bool has_conflict = getFirstConflict(current.paths, conflict);
+
+    /* this is the optimal solution */
+    if (!has_conflict) {
+      return current.paths;
+    }
+
+    /* branch the tree */
+    Constraint c1, c2;
+    createConstraintsFromConflict(conflict, c1, c2);
+
+    /* Left child has agent 1 constraint */
+    CTNode left_child = current;          // Copy parent's state
+    left_child.constraints.push_back(c1); // Add the new rule
+
+    Path new_path_1;
+    // Re-plan ONLY the agent that got the new constraint
+    if (runSpaceTimeAStar(conflict.agent1, left_child.constraints,
+                          new_path_1)) {
+      left_child.paths[conflict.agent1] = new_path_1;
+      left_child.cost = calculateCost(left_child.paths);
+      open_list.push(left_child);
+    }
+
+    /* right child agent 2 gets cosntrained */
+    CTNode right_child = current;          // Copy parent's state
+    right_child.constraints.push_back(c2); // Add the new rule
+
+    Path new_path_2;
+    // Re-plan ONLY the agent that got the new constraint
+    if (runSpaceTimeAStar(conflict.agent2, right_child.constraints,
+                          new_path_2)) {
+      right_child.paths[conflict.agent2] = new_path_2;
+      right_child.cost = calculateCost(right_child.paths);
+      open_list.push(right_child);
+    }
+  }
+
+  // If the open list runs out, no valid solution exists.
+  return {};
 }
 
 std::vector<Constraint> CBSPlanner::getConstraintsForAgent(

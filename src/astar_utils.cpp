@@ -56,8 +56,8 @@ bool AStar::findPath(Agent curr_agent,
                            current->loc.y + dir.second};
 
       // bounds check
-      if (next_loc.x < 0 || next_loc.x >= grid[0].size() || next_loc.y < 0 ||
-          next_loc.y >= grid.size())
+      if (next_loc.x < 0 || next_loc.x >= static_cast<int>(grid[0].size()) ||
+          next_loc.y < 0 || next_loc.y >= static_cast<int>(grid.size()))
         continue;
 
       // check static obstacles
