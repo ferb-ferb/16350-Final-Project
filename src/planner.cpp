@@ -148,6 +148,10 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
     CTNode current = open_list.top();
     open_list.pop();
     nodes_expanded++;
+    if (nodes_expanded % 100 == 0) {
+      std::cout << "Nodes Expanded: " << nodes_expanded
+                << " | Current Cost: " << current.cost << std::endl;
+    }
     if (current.depth > max_depth) {
       max_depth = current.depth;
     }
