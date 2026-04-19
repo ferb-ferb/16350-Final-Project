@@ -65,6 +65,7 @@ struct CTNode {
   std::vector<Constraint> constraints; // Accumulated set of constraints
   std::unordered_map<int, Path> paths; // plans mapped to agents
   int cost;                            // Cost
+  int depth = 0;
 
   /* Overloaded comparator for min heap sorting of conflict tree */
   bool operator>(const CTNode &other) const { return cost > other.cost; }

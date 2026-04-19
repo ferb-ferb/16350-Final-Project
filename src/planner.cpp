@@ -2,6 +2,7 @@
 // #include <algorithm>
 #include "astar_utils.h"
 #include <cmath>
+#include <iostream>
 #include <unordered_map>
 
 void CBSPlanner::createConstraintsFromConflict(const Conflict &conflict,
@@ -104,6 +105,9 @@ int CBSPlanner::calculateCost(const std::unordered_map<int, Path> &paths) {
 }
 
 std::unordered_map<int, Path> CBSPlanner::plan() {
+  int nodes_generated = 1;
+  int nodes_expanded = 0;
+  int max_depth = 0;
   /* Initialize CT */
   std::priority_queue<CTNode, std::vector<CTNode>, std::greater<CTNode>>
       open_list;
@@ -122,6 +126,7 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
   }
 
   root.cost = calculateCost(root.paths);
+  root.depth = 0;
   open_list.push(root);
 
   /* main loop */
@@ -129,13 +134,21 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
     // Pop the cheapest node
     CTNode current = open_list.top();
     open_list.pop();
-
+    nodes_expanded++;
+    if (current.depth > max_depth) {
+      max_depth = current.depth;
+    }
     // Check for collisions
     Conflict conflict;
     bool has_conflict = getFirstConflict(current.paths, conflict);
 
     /* this is the optimal solution */
     if (!has_conflict) {
+      // SUCCESS! WE FOUND A VALID PATH!
+      std::cout << "--- CBS Tree Statistics ---\n";
+      std::cout << "Nodes Generated : " << nodes_generated << "\n";
+      std::cout << "Nodes Expanded  : " << nodes_expanded << "\n";
+      std::cout << "Max Tree Depth  : " << max_depth << "\n";
       return current.paths;
     }
 
@@ -146,6 +159,7 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
     /* Left child has agent 1 constraint */
     CTNode left_child = current;          // Copy parent's state
     left_child.constraints.push_back(c1); // Add the new rule
+    left_child.depth = current.depth + 1;
 
     Path new_path_1;
     // Re-plan ONLY the agent that got the new constraint
@@ -154,11 +168,13 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
       left_child.paths[conflict.agent1] = new_path_1;
       left_child.cost = calculateCost(left_child.paths);
       open_list.push(left_child);
+      nodes_generated++;
     }
 
     /* right child agent 2 gets cosntrained */
     CTNode right_child = current;          // Copy parent's state
     right_child.constraints.push_back(c2); // Add the new rule
+    right_child.depth = current.depth + 1;
 
     Path new_path_2;
     // Re-plan ONLY the agent that got the new constraint
@@ -167,9 +183,12 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
       right_child.paths[conflict.agent2] = new_path_2;
       right_child.cost = calculateCost(right_child.paths);
       open_list.push(right_child);
+      nodes_generated++;
     }
   }
 
+  std::cout << "Falied. Open list empty, no solution found. \n";
+  std::cout << "Nodes Expanded before failure: " << nodes_expanded << "\n";
   // If the open list runs out, no valid solution exists.
   return {};
 }

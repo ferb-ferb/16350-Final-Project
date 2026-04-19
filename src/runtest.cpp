@@ -185,7 +185,17 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   CBSPlanner planner(grid_map, agents);
+  auto start_time = std::chrono::high_resolution_clock::now();
+
   std::unordered_map<int, Path> plan = planner.plan();
+
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> elapsed = end_time - start_time;
+
+  std::cout << "********************************\n";
+  std::cout << "Planning complete!\n";
+  std::cout << "Elapsed: " << elapsed.count() << "ms\n";
+  std::cout << "********************************\n";
 
   int robotposeX, robotposeY;
   Path curr_path;
