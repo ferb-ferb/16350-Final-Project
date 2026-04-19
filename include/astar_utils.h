@@ -34,7 +34,8 @@ template <> struct hash<AStarNode> {
 
 namespace AStar {
 
-bool findPath(Agent curr_agent, const std::vector<std::vector<int>> &grid,
+bool findPath(Location start_loc, Location goal_loc, int start_time,
+              const std::vector<std::vector<int>> &grid,
               const std::vector<Constraint> &agent_constraints, Path &out_path);
 
 inline int manhattan(const Location &a, const Location &b) {

@@ -22,7 +22,8 @@ struct Location {
 struct Agent {
   int id;
   Location start;
-  Location goal;
+  Location goal1;
+  Location goal2;
 };
 
 /* Paths are a vector of locations, index inherently represents time */

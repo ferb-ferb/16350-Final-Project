@@ -193,6 +193,37 @@ bool CBSPlanner::runSpaceTimeAStar(int agent_id,
                                    const std::vector<Constraint> &constraints,
                                    Path &out_path) {
   auto my_constraints = getConstraintsForAgent(agent_id, constraints);
-  return AStar::findPath(this->agents[agent_id], grid_map, my_constraints,
-                         out_path);
+  Agent my_agent;
+  for (const auto &a : agents) {
+    if (a.id == agent_id)
+      my_agent = a;
+  }
+  my_agent = this->agents[agent_id];
+
+  // --- PHASE 1: Start to Goal 1 ---
+  Path path1;
+  // Pass Start, Goal 1, and Time = 0
+  if (!AStar::findPath(my_agent.start, my_agent.goal1, 0, grid_map,
+                       my_constraints, path1)) {
+    return false;
+  }
+
+  // --- PHASE 2: Goal 1 to Goal 2 ---
+  Path path2;
+  // Calculate when we arrived at Goal 1
+  int arrival_time =
+      path1.size() -
+      1; // Assuming your locations have a time attached, or path1.size() - 1
+
+  // Pass Goal 1, Goal 2, and Time = arrival_time
+  if (!AStar::findPath(my_agent.goal1, my_agent.goal2, arrival_time, grid_map,
+                       my_constraints, path2)) {
+    return false;
+  }
+
+  // Combine them
+  out_path = path1;
+  out_path.insert(out_path.end(), path2.begin() + 1, path2.end());
+
+  return true;
 }
