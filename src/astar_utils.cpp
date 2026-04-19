@@ -2,12 +2,10 @@
 #include "planner.h"
 #include <algorithm>
 
-bool AStar::findPath(Agent curr_agent,
+bool AStar::findPath(Location start_loc, Location goal_loc, int start_time,
                      const std::vector<std::vector<int>> &grid,
                      const std::vector<Constraint> &agent_constraints,
                      Path &out_path) {
-  Location start = curr_agent.start;
-  Location goal = curr_agent.goal;
   /* Make the A* open list */
   std::priority_queue<std::shared_ptr<AStarNode>,
                       std::vector<std::shared_ptr<AStarNode>>,
@@ -16,8 +14,8 @@ bool AStar::findPath(Agent curr_agent,
   /* The closed set */
   std::unordered_set<AStarNode> closed;
 
-  auto start_node =
-      std::make_shared<AStarNode>(start, 0, 0, AStar::manhattan(start, goal));
+  auto start_node = std::make_shared<AStarNode>(
+      start_loc, start_time, 0, AStar::manhattan(start_loc, goal_loc));
   open_list.push(start_node);
 
   // N, S, W, E, and WAIT
@@ -37,7 +35,7 @@ bool AStar::findPath(Agent curr_agent,
       continue;
 
     // goal reached
-    if (current->loc == goal) {
+    if (current->loc == goal_loc) {
       out_path.clear();
       auto curr_ptr = current;
       while (curr_ptr != nullptr) {
@@ -86,7 +84,7 @@ bool AStar::findPath(Agent curr_agent,
       // generate and add neighbor
       int next_g = current->g + 1;
       auto neighbor = std::make_shared<AStarNode>(
-          next_loc, next_time, next_g, AStar::manhattan(next_loc, goal),
+          next_loc, next_time, next_g, AStar::manhattan(next_loc, goal_loc),
           current);
 
       if (closed.find(*neighbor) == closed.end()) {
