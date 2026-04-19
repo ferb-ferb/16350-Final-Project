@@ -2,6 +2,7 @@
 // #include <algorithm>
 #include "astar_utils.h"
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <unordered_map>
 
@@ -108,6 +109,13 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
   int nodes_generated = 1;
   int nodes_expanded = 0;
   int max_depth = 0;
+
+  int next_node_id = 0;
+  std::ofstream dot_file("cbs_tree.dot");
+  dot_file << "digraph CBSTree {\n";
+  dot_file
+      << "  node [shape=box, fontname=\"Arial\"];\n"; // Make nodes look nice
+
   /* Initialize CT */
   std::priority_queue<CTNode, std::vector<CTNode>, std::greater<CTNode>>
       open_list;
@@ -127,6 +135,11 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
 
   root.cost = calculateCost(root.paths);
   root.depth = 0;
+  root.id = next_node_id++;
+  root.latest_constraint = "Root Node";
+  dot_file << "  node" << root.id << " [label=\"ID: " << root.id
+           << "\\nCost: " << root.cost << "\\n"
+           << root.latest_constraint << "\"];\n";
   open_list.push(root);
 
   /* main loop */
@@ -144,6 +157,11 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
 
     /* this is the optimal solution */
     if (!has_conflict) {
+      // Color the winning node green in the tree!
+      dot_file << "  node" << current.id
+               << " [style=filled, fillcolor=palegreen];\n";
+      dot_file << "}\n"; // Close the graph
+      dot_file.close();  // Save the file
       // SUCCESS! WE FOUND A VALID PATH!
       std::cout << "--- CBS Tree Statistics ---\n";
       std::cout << "Nodes Generated : " << nodes_generated << "\n";
@@ -160,6 +178,12 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
     CTNode left_child = current;          // Copy parent's state
     left_child.constraints.push_back(c1); // Add the new rule
     left_child.depth = current.depth + 1;
+    left_child.id = next_node_id++;
+    // Create a label like "A1 avoids (5,5) @ t=4"
+    left_child.latest_constraint = "A" + std::to_string(c1.agent_id) +
+                                   " avoids (" + std::to_string(c1.loc1.x) +
+                                   "," + std::to_string(c1.loc1.y) +
+                                   ") @ t=" + std::to_string(c1.time);
 
     Path new_path_1;
     // Re-plan ONLY the agent that got the new constraint
@@ -169,12 +193,22 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
       left_child.cost = calculateCost(left_child.paths);
       open_list.push(left_child);
       nodes_generated++;
+      dot_file << "  node" << left_child.id << " [label=\"ID: " << left_child.id
+               << "\\nCost: " << left_child.cost << "\\n"
+               << left_child.latest_constraint << "\"];\n";
+      dot_file << "  node" << current.id << " -> node" << left_child.id
+               << ";\n";
     }
 
     /* right child agent 2 gets cosntrained */
     CTNode right_child = current;          // Copy parent's state
     right_child.constraints.push_back(c2); // Add the new rule
     right_child.depth = current.depth + 1;
+    right_child.id = next_node_id++;
+    right_child.latest_constraint = "A" + std::to_string(c2.agent_id) +
+                                    " avoids (" + std::to_string(c2.loc1.x) +
+                                    "," + std::to_string(c2.loc1.y) +
+                                    ") @ t=" + std::to_string(c2.time);
 
     Path new_path_2;
     // Re-plan ONLY the agent that got the new constraint
@@ -184,12 +218,20 @@ std::unordered_map<int, Path> CBSPlanner::plan() {
       right_child.cost = calculateCost(right_child.paths);
       open_list.push(right_child);
       nodes_generated++;
+      dot_file << "  node" << right_child.id
+               << " [label=\"ID: " << right_child.id
+               << "\\nCost: " << right_child.cost << "\\n"
+               << right_child.latest_constraint << "\"];\n";
+      dot_file << "  node" << current.id << " -> node" << right_child.id
+               << ";\n";
     }
   }
 
   std::cout << "Falied. Open list empty, no solution found. \n";
   std::cout << "Nodes Expanded before failure: " << nodes_expanded << "\n";
   // If the open list runs out, no valid solution exists.
+  dot_file << "}\n";
+  dot_file.close();
   return {};
 }
 

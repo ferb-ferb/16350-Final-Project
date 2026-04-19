@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <queue>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -67,6 +68,9 @@ struct CTNode {
   int cost;                            // Cost
   int depth = 0;
 
+  int id = 0; 
+  std::string latest_constraint = "Root";
+  
   /* Overloaded comparator for min heap sorting of conflict tree */
   bool operator>(const CTNode &other) const { return cost > other.cost; }
 };
