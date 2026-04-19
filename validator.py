@@ -10,11 +10,13 @@ def run_validation(map_file, traj_file):
     x_size, y_size = map(int, lines[1].split(','))
     col_thresh = int(lines[3])
     num_robots = int(lines[5])
-    
+
     starts = [tuple(map(int, p.split(','))) for p in lines[7].split()]
-    goals = [tuple(map(int, p.split(','))) for p in lines[9].split()]
+    goals1 = [tuple(map(int, p.split(','))) for p in lines[9].split()]
+    goals2 = [tuple(map(int, p.split(','))) for p in lines[11].split()] # New Dropoff line
     
     m_idx = lines.index('M')
+
     costmap = []
     for line in lines[m_idx+1:]:
         costmap.append(list(map(float, line.split(','))))
@@ -47,9 +49,14 @@ def run_validation(map_file, traj_file):
             
         last_t = max(agent_traj.keys())
         
-        # Check Goal
-        if agent_traj[last_t] != goals[agent]:
-            print(f"[ERROR] Agent {agent} ends at {agent_traj[last_t]} but goal is {goals[agent]}")
+        # Check Goal 1 (Did it visit the pickup location at some point?)
+        if goals1[agent] not in agent_traj.values():
+            print(f"[ERROR] Agent {agent} never visited Goal 1 (Pickup) at {goals1[agent]}!")
+            errors += 1
+        
+        # Check Goal 2 (Did it end at the dropoff location?)
+        if agent_traj[last_t] != goals2[agent]:
+            print(f"[ERROR] Agent {agent} ends at {agent_traj[last_t]} but Goal 2 (Dropoff) is {goals2[agent]}")
             errors += 1
 
         for t in range(last_t + 1):

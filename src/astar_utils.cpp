@@ -21,7 +21,7 @@ bool AStar::findPath(Location start_loc, Location goal_loc, int start_time,
   // N, S, W, E, and WAIT
   std::vector<std::pair<int, int>> directions = {
       {0, 1}, {0, -1}, {-1, 0}, {1, 0}, {0, 0}};
-  int max_time = 1000; // prevent infinite loops
+  int max_time = grid.size() * grid[0].size(); // prevent infinite loops
 
   while (!open_list.empty()) {
     auto current = open_list.top();

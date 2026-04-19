@@ -194,10 +194,6 @@ bool CBSPlanner::runSpaceTimeAStar(int agent_id,
                                    Path &out_path) {
   auto my_constraints = getConstraintsForAgent(agent_id, constraints);
   Agent my_agent;
-  for (const auto &a : agents) {
-    if (a.id == agent_id)
-      my_agent = a;
-  }
   my_agent = this->agents[agent_id];
 
   // --- PHASE 1: Start to Goal 1 ---

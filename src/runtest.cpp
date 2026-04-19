@@ -99,18 +99,36 @@ int main(int argc, char *argv[]) {
   std::vector<Location> goals;
   myfile >> letter;
   if (letter != 'G') {
-    std::cout << "error parsing file" << std::endl;
+    std::cout << "Missing G (Goal 1) in map file!" << std::endl;
     return -1;
   }
+  std::vector<Location> goals1;
   for (int i = 0; i < num_robots; i++) {
-    myfile >> helperX >> letter >> helperY;
-    goals.push_back(Location({helperX, helperY}));
+    std::getline(myfile, line, ',');
+    int helperX = std::stoi(line);
+    myfile >> helperY;
+    goals1.push_back({helperX, helperY});
   }
 
-  // make agents
+  // --- READ GOAL 2 (Dropoff) ---
+  myfile >> letter;
+  if (letter != 'D') {
+    std::cout << "Missing D (Goal 2 / Dropoff) in map file!" << std::endl;
+    return -1;
+  }
+  std::vector<Location> goals2;
+  for (int i = 0; i < num_robots; i++) {
+    std::getline(myfile, line, ',');
+    int helperX = std::stoi(line);
+    myfile >> helperY;
+    goals2.push_back({helperX, helperY});
+  }
+
+  // --- MAKE AGENTS ---
   std::vector<Agent> agents;
   for (int i = 0; i < num_robots; i++) {
-    agents.push_back(Agent({i, starts[i], goals[i]}));
+    // Now passing both goals!
+    agents.push_back({i, starts[i], goals1[i], goals2[i]});
   }
 
   // read map

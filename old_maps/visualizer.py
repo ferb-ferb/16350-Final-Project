@@ -4,7 +4,6 @@ from matplotlib.animation import FuncAnimation
 
 import sys
 
-
 def parse_mapfile(filename):
     with open(filename, 'r') as file:
         assert file.readline().strip() == 'W', "Expected 'W' in the first line"
@@ -17,6 +16,9 @@ def parse_mapfile(filename):
         num_robots = int(file.readline().strip())
 
         assert file.readline().strip() == 'S', "Expected 'S' in the seventh line"
+        
+        # Fast-forward until we hit the 'M' (Map) section. 
+        # This safely ignores the G and D lines!
         line = file.readline().strip()
         while line != 'M':
             line = file.readline().strip()
